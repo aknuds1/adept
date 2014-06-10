@@ -42,7 +42,7 @@ public class Lockfile {
   }
 
   /**
-   * Lockfiles gets created by factory read methods or by LockfileManager (in adept-core), only package visibility
+   * Lockfiles get created by factory read methods or by LockfileManager (in adept-core), only package visibility
    */
   public Lockfile(Set<LockfileRequirement> requirements, Set<LockfileContext> context, Set<LockfileArtifact> artifacts) {
     // we are in control of the Sets (only we can instantiate) here so even if

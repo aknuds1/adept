@@ -2,8 +2,6 @@ package adept.repository.metadata
 
 import adept.repository.models.RepositoryName
 import adept.repository.models.RepositoryLocations
-import play.api.libs.json._
-import play.api.libs.functional.syntax._
 import adept.repository.Repository
 import java.io.File
 import adept.repository.GitRepository

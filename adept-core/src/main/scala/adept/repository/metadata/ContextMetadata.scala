@@ -3,48 +3,61 @@ package adept.repository.metadata
 import adept.repository.models._
 import adept.resolution.models._
 import adept.repository.Repository
-import play.api.libs.json._
-import play.api.libs.functional.syntax._
 import java.io.BufferedWriter
 import java.io.FileWriter
 import adept.repository.GitRepository
 import java.io.File
+import net.minidev.json.{JSONArray, JSONObject}
+import collection.JavaConverters._
 
 case class ContextMetadata(values: Seq[ContextValue]) {
   import ContextMetadata._
-  lazy val jsonString = Json.prettyPrint(Json.toJson(values.sorted))
+  lazy val jsonString = toJson(values.sorted)
 
   def write(id: Id, hash: VariantHash, repository: Repository): File = {
     val file = repository.ensureContextFile(id, hash)
     MetadataContent.write(jsonString, file)
   }
+
+  private def toJson(context: Seq[ContextValue]) : String = {
+    //  private[adept] implicit def format: Format[ContextValue] = {
+    //    (
+    //      (__ \ "id").format[String] and
+    //      (__ \ "repository").format[String] and
+    //      (__ \ "commit").format[Option[String]] and
+    //      (__ \ "variant").format[String])({
+    //        case (id, repository, commit, variant) =>
+    //          ContextValue(
+    //            Id(id),
+    //            RepositoryName(repository),
+    //            commit.map(Commit(_)),
+    //            VariantHash(variant))
+    //      },
+    //        unlift({ cv: ContextValue =>
+    //          val ContextValue(id, repository, commit, variant) = cv
+    //          Some((
+    //            id.value,
+    //            repository.value,
+    //            commit.map(_.value),
+    //            variant.value))
+    //        }))
+    //  }
+
+    val jsonArray = new JSONArray()
+    jsonArray.addAll(
+    context.map { contextValue =>
+      val obj = new JSONObject()
+      obj.put("id", contextValue.id.toString)
+      obj.put("repository", contextValue.repository.value)
+      obj.put("commit", contextValue.commit)
+      obj.put("variant", contextValue.variant.value)
+      obj
+    }.asJava)
+    jsonArray.toJSONString
+  }
 }
 
 object ContextMetadata {
-
-  private[adept] implicit def format: Format[ContextValue] = {
-    (
-      (__ \ "id").format[String] and
-      (__ \ "repository").format[String] and
-      (__ \ "commit").format[Option[String]] and
-      (__ \ "variant").format[String])({
-        case (id, repository, commit, variant) =>
-          ContextValue(
-            Id(id),
-            RepositoryName(repository),
-            commit.map(Commit(_)),
-            VariantHash(variant))
-      },
-        unlift({ cv: ContextValue =>
-          val ContextValue(id, repository, commit, variant) = cv
-          Some((
-            id.value,
-            repository.value,
-            commit.map(_.value),
-            variant.value))
-        }))
-  }
-
   def read(id: Id, hash: VariantHash, repository: Repository): Option[ContextMetadata] = {
     val file = repository.getContextFile(id, hash)
     repository.usingFileInputStream(file) {
